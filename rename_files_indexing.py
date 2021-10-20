@@ -8,38 +8,22 @@ import logging
 audio_formats = ['.wav', '.mp3', '.flac', '.ogg', '.m4a', '.aiff']
 
 def index_and_rename(database_directory):
-    file_index = 0
     audiofiles_dir = f'{database_directory}/audio'
 
     check_directories(database_directory)
     move_unrecognised(audiofiles_dir)
     format_check(audiofiles_dir)
-
-    """for filepath in pathlib.Path(audiofiles_dir).glob('**/*'):
-        if os.path.isfile(filepath):
-            
-            destination = f'{audiofiles_dir}/{str(file_index)}.wav'
-            os.rename(filepath, destination)
-            file_index += 1"""
+    rename_by_index(audiofiles_dir)
 
 def format_check(path):
     for filepath in pathlib.Path(path).glob('**/*'):
-            if os.path.isfile(filepath):
                 if filepath.suffix in audio_formats and filepath.suffix != '.wav':
                     audio_to_wav(filepath)
-                else:
-                    print(filepath)
-                    print(f'{filepath.parents[1]}/unrecognised_files/{filepath.stem}{filepath.suffix}')
-                    logging.warning(f'{filepath} extension is not an audio format. Moving to /unrecognised.')
-                    os.rename(filepath, f'{filepath.parents[1]}/unrecognised_files/{filepath.stem}{filepath.suffix}')
-                    
-                    
 
 def audio_to_wav(filepath):
         audio_to_wav = AudioSegment.from_file(filepath) 
         audio_to_wav.export(f'{filepath.parent}/{filepath.stem}.wav', format="wav")
         os.remove(filepath)
-
 
 def check_directories(directory):
     if not os.path.exists(f'{directory}/audio'):
@@ -55,7 +39,15 @@ def move_unrecognised(dir):
                 destination = f'{filepath.parents[1]}/unrecognised_files/{filepath.stem}{filepath.suffix}'
                 os.rename(filepath, destination)
 
+def rename_by_index(dir):
+    file_index = 0
+    for filepath in pathlib.Path(dir).glob('**/*'):
+        if os.path.isfile(filepath):
+            destination = f'{dir}/{str(file_index)}.wav'
+            os.rename(filepath, destination)
+            file_index += 1
+
 
 if __name__ == '__main__':
-    path = "/Users/paxaurora/Desktop/Dev/datasets_processing/AudioDataset"
+    path = "/home/maks/Desktop/Dev/Datasets processing/AudioDataset"
     index_and_rename(path)
