@@ -43,6 +43,7 @@ def rename_by_index(dir):
     file_index = 0
     for filepath in pathlib.Path(dir).glob('**/*'):
         if os.path.isfile(filepath):
+            
             destination = f'{dir}/{str(file_index)}.wav'
             os.rename(filepath, destination)
             file_index += 1
