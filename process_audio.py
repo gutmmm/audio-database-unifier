@@ -9,11 +9,11 @@ import os
 
 from conversion import convert_float_to_int, convert_int_to_int
 
-directory = '/home/maks/Desktop/Dev/Datasets processing/AudioDataset/audio'
 
-pd.set_option('display.max_colwidth', 30)
+pd.set_option('display.max_colwidth', 20)
 
-def get_audio_stats():
+
+def get_stats(directory):
     audio_paths = [audio for audio in Path(directory).glob('**/*')]
     audio_names = [name for name in os.listdir(directory)]
     audio_files = [read(audio) for audio in audio_paths]
@@ -29,9 +29,11 @@ def get_audio_stats():
                             'audio dtype':audio_dtype,
                             'num of channels':audio_nchannels})
 
-    print(audio_df)
     return audio_df
 
+def process_audiofiles(directory):
+    audio_df = get_stats(directory)
+    file_to_int16(audio_df)
 
 def file_to_int16(audio_df):
     for idx, element in enumerate(audio_df['audio dtype']):
@@ -41,6 +43,7 @@ def file_to_int16(audio_df):
         elif 'int16' not in element:
             int_to_int16 = convert_int_to_int(audio_df.loc[idx]['audio samples'])
             write_to_wav(audio_df, idx, int_to_int16)
+    unify_samplerate(audio_df)
             
 def write_to_wav(audio_df, idx, data):
     destination = audio_df.loc[idx]['audio path']
@@ -55,8 +58,10 @@ def unify_samplerate(audio_df):
             sound = AudioSegment.from_file(audio_df['audio path'][idx], 
                                            format='wav', 
                                            frame_rate=audio_df['audio samplerate'][idx])
+
             sound = sound.set_frame_rate(default_sr)
             sound.export(audio_df['audio path'][idx], format='wav')
+    split_channels(audio_df)
 
 def split_channels(audio_df):
     default_num_channels = 1
@@ -64,21 +69,21 @@ def split_channels(audio_df):
     parent_dir = audio_df.loc[0]['audio path'].parent
     for idx, element in enumerate(audio_df['num of channels']):
         if element != default_num_channels:
-            L, R = create_filenames(audio_df, parent_dir, idx)
+            L, R = create_mono_filenames(audio_df, parent_dir, idx)
             stereo_file = AudioSegment.from_file(audio_df.loc[idx]['audio path'])
             mono_files = stereo_file.split_to_mono()
             mono_files[0].export(L, format='wav')
             mono_files[1].export(R, format='wav')
             os.remove(Path(audio_df.loc[idx]['audio path']))
 
-def create_filenames(audio_df, parent_dir, idx):
+def create_mono_filenames(audio_df, parent_dir, idx):
     filename = audio_df.loc[idx]['audio path'].stem
     mono_left = f'{parent_dir}/{filename}L.wav'
     mono_right = f'{parent_dir}/{filename}R.wav'
     return mono_left, mono_right
 
-audio_stats = get_audio_stats()
-file_to_int16(audio_stats)
-unify_samplerate(audio_stats)
-split_channels(audio_stats)
-audio_stats = get_audio_stats()
+def main(directory):
+    audio_stats = process_audiofiles(directory)
+
+
+
