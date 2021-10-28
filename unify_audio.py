@@ -12,6 +12,20 @@ from conversion import convert_float_to_int, convert_int_to_int
 
 pd.set_option('display.max_colwidth', 20)
 
+def process_audiofiles(audio_formats, audio_dir):
+    format_check(audio_formats, audio_dir)
+    audio_df = get_stats(audio_dir)
+    file_to_int16(audio_df)
+
+def format_check(audio_formats, audio_dir):
+    for filepath in Path(audio_dir).glob('**/*'):
+                if filepath.suffix in audio_formats and filepath.suffix != '.wav':
+                    audio_to_wav(filepath)
+
+def audio_to_wav(filepath):
+        audio_to_wav = AudioSegment.from_file(filepath) 
+        audio_to_wav.export(f'{filepath.parent}/{filepath.stem}.wav', format="wav")
+        os.remove(filepath)
 
 def get_stats(directory):
     audio_paths = [audio for audio in Path(directory).glob('**/*')]
@@ -30,10 +44,6 @@ def get_stats(directory):
                             'num of channels':audio_nchannels})
 
     return audio_df
-
-def process_audiofiles(directory):
-    audio_df = get_stats(directory)
-    file_to_int16(audio_df)
 
 def file_to_int16(audio_df):
     for idx, element in enumerate(audio_df['audio dtype']):
@@ -81,9 +91,6 @@ def create_mono_filenames(audio_df, parent_dir, idx):
     mono_left = f'{parent_dir}/{filename}L.wav'
     mono_right = f'{parent_dir}/{filename}R.wav'
     return mono_left, mono_right
-
-def main(directory):
-    audio_stats = process_audiofiles(directory)
 
 
 
