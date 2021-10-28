@@ -1,9 +1,10 @@
 import os
-from pathlib import Path
+import logging
+from tqdm import tqdm
 from wave import Error
+from pathlib import Path
 from pydub import AudioSegment
 from scipy.io.wavfile import read
-import logging
 
 import unify_audio, split_audio
 
@@ -11,6 +12,7 @@ audio_formats = ['.wav', '.mp3', '.flac', '.ogg', '.m4a', '.aiff']
 audio_requirement = {'sample rate':44100,
                      'audio dtype':'int16',
                      'num of chanels':1}
+
 
 def check_directory(dir_parent, audio_dir):
     if not os.path.exists(audio_dir):
@@ -49,9 +51,11 @@ def main():
     audio_dir = f'{directory}/audio'
     check_directory(directory, audio_dir)
     unify_audio.process_audiofiles(audio_formats, audio_dir)
+    check_wavs(audio_dir)
     audio_df = unify_audio.get_stats(audio_dir)
-    #rename_by_index(audio_df, audio_dir)
-    split_audio.split(audio_df)
+    print(audio_df)
+    rename_by_index(audio_df, audio_dir)
+    #split_audio.split(audio_df)
 
 if __name__ == '__main__':
     main()

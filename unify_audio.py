@@ -2,12 +2,13 @@ from scipy.io.wavfile import write
 from scipy.io.wavfile import read
 from pydub import AudioSegment
 from pathlib import Path
+from tqdm import tqdm
 import pandas as pd
 import numpy as np
 import wave
 import os 
 
-from conversion import convert_float_to_int, convert_int_to_int
+from conversion import convert
 
 
 pd.set_option('display.max_colwidth', 20)
@@ -15,17 +16,19 @@ pd.set_option('display.max_colwidth', 20)
 def process_audiofiles(audio_formats, audio_dir):
     format_check(audio_formats, audio_dir)
     audio_df = get_stats(audio_dir)
-    file_to_int16(audio_df)
+    unify_samplerate(audio_df)
+    audio_df = get_stats(audio_dir)
+    file_to_float32(audio_df)
 
 def format_check(audio_formats, audio_dir):
     for filepath in Path(audio_dir).glob('**/*'):
-                if filepath.suffix in audio_formats and filepath.suffix != '.wav':
-                    audio_to_wav(filepath)
+        if filepath.suffix in audio_formats and filepath.suffix != '.wav':
+            export_to_wav(filepath)
 
-def audio_to_wav(filepath):
-        audio_to_wav = AudioSegment.from_file(filepath) 
-        audio_to_wav.export(f'{filepath.parent}/{filepath.stem}.wav', format="wav")
-        os.remove(filepath)
+def export_to_wav(filepath):
+    audio_to_wav = AudioSegment.from_file(filepath) 
+    audio_to_wav.export(f'{filepath.parent}/{filepath.stem}.wav', format="wav")
+    os.remove(filepath)
 
 def get_stats(directory):
     audio_paths = [audio for audio in Path(directory).glob('**/*')]
@@ -44,22 +47,6 @@ def get_stats(directory):
                             'num of channels':audio_nchannels})
 
     return audio_df
-
-def file_to_int16(audio_df):
-    for idx, element in enumerate(audio_df['audio dtype']):
-        if 'float' in element:
-            flt_to_int16 = convert_float_to_int(audio_df.loc[idx]['audio samples'])
-            write_to_wav(audio_df, idx, flt_to_int16)
-        elif 'int16' not in element:
-            int_to_int16 = convert_int_to_int(audio_df.loc[idx]['audio samples'])
-            write_to_wav(audio_df, idx, int_to_int16)
-    unify_samplerate(audio_df)
-            
-def write_to_wav(audio_df, idx, data):
-    destination = audio_df.loc[idx]['audio path']
-    write(filename=destination,
-          rate=audio_df.loc[idx]['audio samplerate'],
-          data=data)
 
 def unify_samplerate(audio_df):
     default_sr = 44100
@@ -92,5 +79,14 @@ def create_mono_filenames(audio_df, parent_dir, idx):
     mono_right = f'{parent_dir}/{filename}R.wav'
     return mono_left, mono_right
 
-
-
+def file_to_float32(audio_df):
+    for idx, element in enumerate(audio_df['audio dtype']):
+        if element != 'float32':
+            file_to_float32 = convert(audio_df.loc[idx]['audio samples'], np.float32)
+            write_to_wav(audio_df, idx, file_to_float32)
+            
+def write_to_wav(audio_df, idx, data):
+    destination = audio_df.loc[idx]['audio path']
+    write(filename=destination,
+          rate=audio_df.loc[idx]['audio samplerate'],
+          data=data)
