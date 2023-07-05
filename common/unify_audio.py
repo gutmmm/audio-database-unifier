@@ -1,17 +1,13 @@
-from scipy.io.wavfile import write
-from scipy.io.wavfile import read
-from pydub import AudioSegment
-from pathlib import Path
-import pandas as pd
-import numpy as np
-import wave
 import os 
+from pathlib import Path
+
+import pandas as pd
+from pydub import AudioSegment
+from scipy.io.wavfile import write, read
 
 from common.conversion import convert_float_to_int, convert_int_to_int
 
 pd.set_option('display.max_colwidth', 20)
-
-
 
 
 class audioUnify():
@@ -63,7 +59,7 @@ class audioUnify():
                 int_to_int16 = convert_int_to_int(self.audio_df.loc[idx]['audio samples'])
                 self.write_to_wav(idx, int_to_int16)
 
-    def write_to_wav(self, idx, data):
+    def write_to_wav(self, idx: int, data: list):
         """Export to .wav w.r.t dataframe"""
         destination = self.audio_df.loc[idx]['audio path']
         write(filename=destination, rate=self.audio_df.loc[idx]['audio samplerate'], data=data)
@@ -93,7 +89,7 @@ class audioUnify():
                 mono_files[1].export(R, format='wav')
                 os.remove(Path(self.audio_df.loc[idx]['audio path']))
 
-    def create_mono_filenames(self, idx):
+    def create_mono_filenames(self, idx: int) -> list[list, list]:
         filename = self.audio_df.loc[idx]['audio path'].stem
         mono_left = f'{self.audio_dir}/{filename}L.wav'
         mono_right = f'{self.audio_dir}/{filename}R.wav'

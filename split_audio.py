@@ -7,6 +7,7 @@ from pydub import AudioSegment
 from scipy.io.wavfile import read, write
 
 def split():
+
     prep_dir()
     
     for file in os.listdir('AudioExport'):
@@ -23,7 +24,7 @@ def prep_dir():
     else:
         os.mkdir('AudioExport/chunks')
 
-def get_chunks(file, fs, audio, slice_length):
+def get_chunks(file, fs: int, audio: list, slice_length: int):
     audio = audio[:len(audio) - len(audio)%slice_length]
     chunks = [audio[slice_length*idx : slice_length*(idx + 1)] for idx in range(6)]
     for idx, chunk in enumerate(chunks):

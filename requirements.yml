@@ -1,0 +1,9 @@
+name: audio_unifier
+channels:
+  - defaults
+dependencies:
+  - python
+  - scipy
+  - pydub
+  - pandas
+  - ffmpeg
