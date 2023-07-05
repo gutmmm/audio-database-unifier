@@ -8,8 +8,8 @@ from scipy.io.wavfile import read, write
 
 def split():
 
-    prep_dir()
-    
+    prepare_dir()
+
     for file in os.listdir('AudioExport'):
         if Path(file).suffix == '.wav':
             fs, audio = read(os.path.join('AudioExport', file))
@@ -17,7 +17,7 @@ def split():
             slice_length = fs * slice_duration
             get_chunks(file, fs, audio, slice_length)
 
-def prep_dir():
+def prepare_dir():
     if "chunks" in os.listdir('AudioExport'):
         shutil.rmtree('AudioExport/chunks')
         os.mkdir('AudioExport/chunks')
