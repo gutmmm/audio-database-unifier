@@ -1,4 +1,4 @@
-# AudioDatasetProcessor
+# Audio Dataset Unifier
 
 Convienient scipt for processing large audio dataset for a time series forecasting experiments.
 
