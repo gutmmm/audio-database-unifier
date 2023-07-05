@@ -1,57 +1,33 @@
 import os
+import shutil
 from pathlib import Path
 from wave import Error
 from pydub import AudioSegment
-from scipy.io.wavfile import read
+
 import logging
 
-import unify_audio, split_audio
+from common.unify_audio import audioUnify
+from common.prep_working_dir import prepareDir
+from common.rename_by_idx import rename
 
-audio_formats = ['.wav', '.mp3', '.flac', '.ogg', '.m4a', '.aiff']
-audio_requirement = {'sample rate':44100,
-                     'audio dtype':'int16',
-                     'num of chanels':1}
 
-def check_directory(dir_parent, audio_dir):
-    if not os.path.exists(audio_dir):
-        logging.error("Directory does not contain an 'audio' folder. Check provided path.")
-        exit()
-    elif not os.path.exists(f'{dir_parent}/unrecognised_files'):
-        logging.warning('Path for unrecognised files not found. Folder will be created')
-        os.mkdir(f'{dir_parent}/unrecognised_files')
-
-    move_unrecognised(audio_dir)
-
-def move_unrecognised(audio_dir):
-    for filepath in Path(audio_dir).glob('**/*'):
-            if filepath.suffix not in audio_formats:
-                destination = f'{filepath.parents[1]}/unrecognised_files/{filepath.stem}{filepath.suffix}'
-                os.rename(filepath, destination)
-
-def rename_by_index(audio_df, audio_dir):
-    file_index = 0
-    for filepath in Path(audio_dir).glob('**/*'):
-        if os.path.isfile(filepath):
-            destination = f'{audio_dir}/{str(file_index)}.wav'
-            os.rename(filepath, destination)
-            file_index += 1
-    check_wavs(audio_dir)
-      
-def check_wavs(audio_dir):
-    audio_paths = [audio for audio in Path(audio_dir).glob('**/*')]
-    try:
-        audio_files = [read(audio) for audio in audio_paths]
-    except:
-        raise Exception("Error when loading audio file")
 
 def main():
-    directory = "/home/maks/Desktop/Dev/Datasets processing/AudioDataset"
-    audio_dir = f'{directory}/audio'
-    check_directory(directory, audio_dir)
-    unify_audio.process_audiofiles(audio_formats, audio_dir)
-    audio_df = unify_audio.get_stats(audio_dir)
-    #rename_by_index(audio_df, audio_dir)
-    split_audio.split(audio_df)
+    audio_formats = ['.wav', '.mp3', '.flac', '.ogg', '.m4a', '.aiff']
+    export_sample_rate = 44100
+    audio_origin = 'audio_copy'
+    audio_dir = 'AudioExport'
+ 
+    prep_working_dir = prepareDir(audio_origin, audio_formats)
+    prep_working_dir.create()
+
+    processor = audioUnify(audio_formats, audio_dir, export_sample_rate)
+    processor.format_check()
+    processor.get_stats()
+    processor.file_to_int16()
+    processor.unify_samplerate()
+    processor.split_channels()
+    rename()
 
 if __name__ == '__main__':
     main()

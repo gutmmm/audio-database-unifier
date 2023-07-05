@@ -1,31 +1,31 @@
+import os
 import random
 import numpy as np
+import shutil
+from pathlib import Path
 from pydub import AudioSegment
-from scipy.io.wavfile import read
+from scipy.io.wavfile import read, write
 
-def split(audio_df):
-    print(audio_df)
-    fs = audio_df.loc[0]['audio samplerate']
-    slice_duration = 4 #in seconds
-    slice_length = fs * slice_duration
+def split():
+    prep_dir()
+    
+    for file in os.listdir('AudioExport'):
+        if Path(file).suffix == '.wav':
+            fs, audio = read(os.path.join('AudioExport', file))
+            slice_duration = 4 #in seconds
+            slice_length = fs * slice_duration
+            get_chunks(file, fs, audio, slice_length)
 
-    load_audio(slice_length, audio_df)
+def prep_dir():
+    if "chunks" in os.listdir('AudioExport'):
+        shutil.rmtree('AudioExport/chunks')
+        os.mkdir('AudioExport/chunks')
+    else:
+        os.mkdir('AudioExport/chunks')
 
-def load_audio(slice_length, audio_df):
-    #for element in audio_df.loc[0]['audio path']:
-        element = audio_df.loc[0]['audio path']
-        _, audio_samples = read(element)
-        audio_cues(slice_length, audio_samples)
-
-def audio_cues(slice_length, audio_samples):
-    audiofile_length = int(len(audio_samples))
-    last_possible_sample = int(audiofile_length - slice_length)
-    start_cues = [random.randint(0, last_possible_sample) for cue in range(20)]
-    slice_audio(audio_samples, start_cues, slice_length)
-
-def slice_audio(audio_samples, start_cues, slice_length):
-    new_file = audio_samples[start_cues[0]:start_cues[0]+slice_length]
-    print(new_file)
-
-    #audio_slice = audio_samples[0:44100]
-    #print(len(audio_slice))
+def get_chunks(file, fs, audio, slice_length):
+    audio = audio[:len(audio) - len(audio)%slice_length]
+    chunks = [audio[slice_length*idx : slice_length*(idx + 1)] for idx in range(6)]
+    for idx, chunk in enumerate(chunks):
+        print(len(chunk))
+        write(f'AudioExport/chunks/{idx}_{file}', fs, chunk)
